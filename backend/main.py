@@ -1,6 +1,8 @@
 from fastapi import FastAPI, UploadFile, File
 import shutil
 import os
+
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
