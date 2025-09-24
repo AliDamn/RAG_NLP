@@ -51,8 +51,8 @@ async def index_pdf(file: UploadFile = File(...)):
 def ask_question(query: QueryInput):
     embedding_function = OpenAIEmbeddings()
     db = Chroma(
-        embedding_function=embedding_function,
-        persist_directory = "/tmp/chroma"
+        persist_directory=os.getenv("CHROMA_PATH"),
+        embedding_function=embedding_function
     )
 
     results = db.similarity_search_with_relevance_scores(query.query_text, k=3)
