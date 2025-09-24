@@ -51,7 +51,6 @@ async def index_pdf(file: UploadFile = File(...)):
 def ask_question(query: QueryInput):
     embedding_function = OpenAIEmbeddings()
     db = Chroma(
-        persist_directory=os.getenv("CHROMA_PATH"),
         embedding_function=embedding_function
     )
 
