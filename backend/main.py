@@ -4,7 +4,7 @@ import os
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
-from repository import get_clean_text_from_pdf, split_text, save_to_chroma, QueryInput
+from backend.repository import get_clean_text_from_pdf, split_text, save_to_chroma, QueryInput
 from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
