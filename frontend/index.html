@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF RAG System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .section h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 2px;
+        }
+
+        .upload-area {
+            border: 2px dashed #4facfe;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: #00f2fe;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.2);
+        }
+
+        .upload-area.dragover {
+            border-color: #00f2fe;
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #4facfe;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .query-section {
+            margin-top: 40px;
+        }
+
+        .query-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        .query-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .response-area {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 4px solid #4facfe;
+            display: none;
+        }
+
+        .response-content {
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .sources {
+            color: #666;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: #666;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .file-info {
+            background: #e8f4f8;
+            border: 1px solid #4facfe;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+
+
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 PDF RAG System</h1>
+            <p>Upload PDF documents and ask questions about their content</p>
+        </div>
+
+        <div class="content">
+
+
+            <div class="section">
+                <h2>📤 Upload PDF Document</h2>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">Click to select a PDF file or drag and drop it here</div>
+                    <div class="upload-subtext">Only PDF files are supported</div>
+                    <input type="file" id="fileInput" class="file-input" accept=".pdf">
+                </div>
+                <div class="file-info" id="fileInfo"></div>
+                <div class="status" id="uploadStatus"></div>
+            </div>
+
+            <div class="section query-section">
+                <h2>❓ Ask Questions</h2>
+                <textarea
+                    class="query-input"
+                    id="queryInput"
+                    placeholder="Enter your question about the uploaded PDF content..."
+                    rows="4"
+                ></textarea>
+                <button class="btn" id="askBtn">Ask Question</button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <div>Processing your question...</div>
+                </div>
+
+                <div class="response-area" id="responseArea">
+                    <div class="response-content" id="responseContent"></div>
+                    <div class="sources" id="sources"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let apiBaseUrl = 'https://rag-nlp-5.onrender.com';
+
+        // Get DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const queryInput = document.getElementById('queryInput');
+        const askBtn = document.getElementById('askBtn');
+        const loading = document.getElementById('loading');
+        const responseArea = document.getElementById('responseArea');
+        const responseContent = document.getElementById('responseContent');
+        const sources = document.getElementById('sources');
+
+
+        // File upload functionality
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                handleFileUpload(files[0]);
+            } else {
+                showStatus('Please select a valid PDF file', 'error');
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        async function handleFileUpload(file) {
+            if (file.type !== 'application/pdf') {
+                showStatus('Please select a PDF file', 'error');
+                return;
+            }
+
+            // Show file info
+            fileInfo.innerHTML = `
+                <strong>Selected file:</strong> ${file.name}<br>
+                <strong>Size:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB
+            `;
+            fileInfo.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                showStatus('Uploading and processing PDF...', 'info');
+                const response = await fetch(`${apiBaseUrl}/index_pdf`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showStatus(`✅ ${result.status}`, 'success');
+                } else {
+                    const error = await response.text();
+                    showStatus(`❌ Upload failed: ${error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        // Question asking functionality
+        askBtn.addEventListener('click', askQuestion);
+        queryInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                askQuestion();
+            }
+        });
+
+        async function askQuestion() {
+            const query = queryInput.value.trim();
+            if (!query) {
+                showStatus('Please enter a question', 'error');
+                return;
+            }
+
+            loading.style.display = 'block';
+            responseArea.style.display = 'none';
+            askBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${apiBaseUrl}/ask`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query_text: query })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    displayResponse(result);
+                } else {
+                    const error = await response.text();
+                    showStatus(`❌ Query failed: ${error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Network error: ${error.message}`, 'error');
+            } finally {
+                loading.style.display = 'none';
+                askBtn.disabled = false;
+            }
+        }
+
+        function displayResponse(result) {
+            if (result.response === "Not found") {
+                responseContent.innerHTML = "❌ No relevant information found in the uploaded documents.";
+                sources.innerHTML = "";
+            } else {
+                const responseText = Array.isArray(result.response)
+                    ? result.response.join('<br>')
+                    : result.response;
+
+                responseContent.innerHTML = `<strong>Answer:</strong><br>${responseText}`;
+
+                if (result.sources && result.sources.length > 0) {
+                    sources.innerHTML = `<strong>Sources:</strong> ${result.sources.join(', ')}`;
+                } else {
+                    sources.innerHTML = "";
+                }
+            }
+
+            responseArea.style.display = 'block';
+        }
+
+        function showStatus(message, type) {
+            uploadStatus.textContent = message;
+            uploadStatus.className = `status ${type}`;
+            uploadStatus.style.display = 'block';
+
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    uploadStatus.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>
